@@ -135,7 +135,7 @@ export const LandingPage = ({ onStart }: { onStart: () => void }) => {
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-[1.1]">
             SmartTraffic AI: <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
-              Real-Time Monitoring Video Analysis And Signal Optimization
+              Real-Time Monitoring Video And Adaptive Signal Control Decision
             </span>
           </h1>
           <div className="mt-12 flex flex-col sm:flex-row gap-4 justify-center">
@@ -470,7 +470,7 @@ export const LandingPage = ({ onStart }: { onStart: () => void }) => {
               <span className="text-lg font-bold text-white">SmartTraffic AI</span>
             </div>
             <p className="text-slate-500 text-sm max-w-xs">
-              SmartTraffic AI: Real-Time Monitoring Traffic Video And Signal Optimization
+              SmartTraffic AI: Real-Time Monitoring Video And Adaptive Signal Control Decision
             </p>
           </div>
           <div className="flex gap-12">
