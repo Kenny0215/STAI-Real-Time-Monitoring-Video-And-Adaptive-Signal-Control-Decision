@@ -388,7 +388,7 @@ const FuzzyChart: React.FC = () => {
 
 
 // ── Main page ─────────────────────────────────────────────────
-export const AnalyticsPage = () => {
+export const AnalyticsPage = ({ hasData = false }: { hasData?: boolean }) => {
   const [rows,         setRows]         = useState<ComparisonRow[]>([]);
   const [perfRows,     setPerfRows]     = useState<PerformanceRow[]>([]);
   const [loading,      setLoading]      = useState(true);
@@ -437,7 +437,7 @@ export const AnalyticsPage = () => {
     finally  { setLoading(false); }
   };
 
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => { if (hasData) fetchAll(); }, [hasData]);
 
   const handleExport = () => {
     setExporting(true);
@@ -537,6 +537,30 @@ export const AnalyticsPage = () => {
       </AnimatePresence>
     </div>
   );
+
+  // ── Gate: show waiting state until user runs analysis ──────
+  if (!hasData) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 gap-5 text-slate-500">
+        <div className="w-20 h-20 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">
+          <BarChart2 size={36} className="text-slate-600" />
+        </div>
+        <div className="text-center">
+          <p className="text-lg font-semibold text-slate-300">No analysis data yet</p>
+          <p className="text-sm text-slate-500 mt-2 max-w-sm">
+            Upload your traffic videos and run AI analysis first.
+            Analytics will appear here once the analysis is complete.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-400 text-sm">
+          <span>Go to</span>
+          <span className="text-emerald-400 font-medium">Video Upload</span>
+          <span>→ click</span>
+          <span className="text-emerald-400 font-medium">Start AI Analysis</span>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) return <LoadingState />;
 

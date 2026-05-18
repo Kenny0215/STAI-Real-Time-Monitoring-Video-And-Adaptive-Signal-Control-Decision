@@ -182,7 +182,7 @@ export default function App() {
                 onAnalysisComplete={handleAnalysisComplete}
               />
             )}
-            {page === 'analytics'  && <AnalyticsPage />}
+            {page === 'analytics'  && <AnalyticsPage hasData={hasData} />}
             {page === 'simulation' && <SimulationPage hasData={hasData} />}
             {page === 'feedback'   && <FeedbackPage />}
             {page === 'chat'       && <ChatPage hasData={hasData} messages={chatMessages} setMessages={setChatMessages} />}
