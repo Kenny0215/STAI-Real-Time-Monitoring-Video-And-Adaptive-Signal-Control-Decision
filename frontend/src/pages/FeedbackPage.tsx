@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Star, Activity, MessageSquare, CheckCircle } from 'lucide-react';
+import { Star, Activity, MessageSquare, CheckCircle, ClipboardList } from 'lucide-react';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { cn } from '../utils';
@@ -19,14 +19,14 @@ export const FeedbackPage = () => {
     setError('');
 
     if (rating === 0) {
-      setError('Please select a star rating.');
+      setError('Please select a star rating before submitting.');
       return;
     }
 
     setLoading(true);
     try {
       const { error: insertError } = await supabase.from('feedback').insert({
-        user_id:    null,   // custom auth — no session user id
+        user_id:    null,
         rating,
         quality,
         comments,
@@ -41,7 +41,7 @@ export const FeedbackPage = () => {
       setComments('');
 
     } catch (err: any) {
-      setError(err.message || 'Failed to submit feedback');
+      setError(err.message || 'Failed to submit evaluation');
     } finally {
       setLoading(false);
     }
@@ -49,14 +49,17 @@ export const FeedbackPage = () => {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <Card title="System Feedback" subtitle="Help us improve the traffic management accuracy">
+      <Card
+        title="System Evaluation"
+        subtitle="Rate the accuracy of AI vehicle detection and signal optimization for this session"
+      >
 
         {success && (
           <div className="mt-4 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-3">
             <CheckCircle size={20} className="text-emerald-500" />
             <div>
-              <p className="text-emerald-400 font-medium">Feedback submitted!</p>
-              <p className="text-slate-400 text-sm">Thank you for helping us improve.</p>
+              <p className="text-emerald-400 font-medium">Evaluation submitted successfully!</p>
+              <p className="text-slate-400 text-sm">Thank you — your input helps improve the system.</p>
             </div>
           </div>
         )}
@@ -68,10 +71,15 @@ export const FeedbackPage = () => {
         )}
 
         <form className="space-y-6 mt-4" onSubmit={handleSubmit}>
+
+          {/* Star rating */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-3">
-              Rate System Accuracy
+            <label className="block text-sm font-medium text-slate-300 mb-1">
+              Overall AI Detection Accuracy
             </label>
+            <p className="text-xs text-slate-500 mb-3">
+              Rate how accurately the system detected and classified vehicles across all lanes.
+            </p>
             <div className="flex gap-2">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
@@ -93,13 +101,21 @@ export const FeedbackPage = () => {
                   />
                 </button>
               ))}
+              {rating > 0 && (
+                <span className="ml-2 text-sm text-slate-400 self-center">
+                  {['', 'Poor', 'Fair', 'Average', 'Good', 'Excellent'][rating]}
+                </span>
+              )}
             </div>
           </div>
 
+          {/* Signal optimisation quality */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2 flex items-center gap-2">
-              <Activity size={16} className="text-emerald-500" />
-              Traffic Analysis Quality
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              <span className="flex items-center gap-2">
+                <Activity size={16} className="text-emerald-500" />
+                Signal Optimisation Quality
+              </span>
             </label>
             <select
               value={quality}
@@ -113,22 +129,25 @@ export const FeedbackPage = () => {
             </select>
           </div>
 
+          {/* Comments */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2 flex items-center gap-2">
-              <MessageSquare size={16} className="text-emerald-500" />
-              Additional Comments
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              <span className="flex items-center gap-2">
+                <MessageSquare size={16} className="text-emerald-500" />
+                Evaluation Remarks
+              </span>
             </label>
             <textarea
               rows={4}
               value={comments}
               onChange={(e) => setComments(e.target.value)}
-              className="w-full bg-slate-800 border border-brand-border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-emerald-500"
-              placeholder="Share your experience or report issues..."
+              className="w-full bg-slate-800 border border-brand-border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-emerald-500 resize-none"
+              placeholder="Rate the accuracy of AI vehicle detection and signal optimization for this session. Report any miscounts, missed detections, or signal timing issues observed."
             />
           </div>
 
           <Button className="w-full py-4" type="submit" disabled={loading}>
-            {loading ? 'Submitting...' : 'Submit Feedback'}
+            {loading ? 'Submitting...' : 'Submit Evaluation'}
           </Button>
         </form>
       </Card>

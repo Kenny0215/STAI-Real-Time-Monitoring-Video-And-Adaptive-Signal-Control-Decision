@@ -6,6 +6,7 @@ import {
   MessageSquare, 
   Bot,
   LogOut, 
+  ClipboardList,
   Menu,
   Zap,
 } from 'lucide-react';
@@ -31,7 +32,7 @@ export const DashboardLayout = ({
     { id: 'analytics',  label: 'Analytics',       icon: <BarChart3 size={20} /> },
     { id: 'simulation', label: 'AI Simulation',   icon: <Zap size={20} /> },
     { id: 'chat',       label: 'Traffic Chatbox', icon: <Bot size={20} /> },
-    { id: 'feedback',   label: 'Feedback',        icon: <MessageSquare size={20} /> },
+    { id: 'feedback',   label: 'System Evaluation',        icon: <ClipboardList size={20} /> },
   ];
 
   const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
