@@ -1,8 +1,3 @@
-"""
-app.py — Traffic Management FYP
-Entry point only. All logic lives in core/ and routes/.
-To add a new feature: create routes/newfeature.py and register it here.
-"""
 import os
 import threading
 import warnings
