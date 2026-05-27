@@ -56,7 +56,7 @@ def file_too_large(e):
 @app.route("/", methods=["GET"])
 def index():
     return jsonify({
-        "message":     "Traffic Management FYP API v6.0",
+        "message":     "Smart Traffic AI System API",
         "fuzzy_ready": fuzzy_ctrl.is_ready(),
         "routes": {
             "stats":      "/api/live-stats, /api/coordination, /api/signal-state, /api/signal-config, /api/vehicle-type-summary",
@@ -105,7 +105,7 @@ def start_background_services():
 # ── Main ───────────────────────────────────────────────────
 if __name__ == "__main__":
     print("=" * 55)
-    print("  Traffic Management FYP — Flask API v6.0")
+    print("  Smart Traffic AI System API started")
     print("  Video processing starts on /api/start-analysis")
     print("=" * 55)
     start_background_services()
