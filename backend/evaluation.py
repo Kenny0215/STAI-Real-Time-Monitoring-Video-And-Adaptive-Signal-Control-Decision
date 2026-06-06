@@ -1,19 +1,3 @@
-"""
-retrain_rf.py
-Retrains the Random Forest model with optimized settings
-to achieve 80-90% accuracy.
-
-Fixes applied:
-1. class_weight='balanced' — fixes class imbalance (Low=719 vs High=372)
-2. GridSearchCV — finds best hyperparameters automatically
-3. Feature engineering — adds interaction features
-4. Saves improved model back to congestion_model.pkl
-
-Usage:
-    cd backend
-    python retrain_rf.py
-"""
-
 import os
 import sys
 import warnings
