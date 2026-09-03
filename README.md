@@ -64,8 +64,7 @@ The system includes a **dual-role platform**: a user-facing dashboard for traffi
 ---
 
 ## System Architecture
-C:\Users\ASUS\Documents\UTEM\Course\Sem 6\BAXU 3973 (FYP)\FYPV2\System architecture.png
-
+<img width="1622" height="1162" alt="System architecture" src="https://github.com/user-attachments/assets/ef7c17c7-b0bf-4587-905d-97611e936cab" />
 ---
 
 ## Tech Stack
