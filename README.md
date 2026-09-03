@@ -64,7 +64,8 @@ The system includes a **dual-role platform**: a user-facing dashboard for traffi
 ---
 
 ## System Architecture
-<img width="1622" height="1162" alt="System architecture" src="https://github.com/user-attachments/assets/ef7c17c7-b0bf-4587-905d-97611e936cab" />
+<img width="1623" height="1161" alt="System architecture" src="https://github.com/user-attachments/assets/1299941c-4e55-4fe2-b775-34e2298949dc" />
+
 ---
 
 ## Tech Stack
