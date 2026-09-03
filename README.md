@@ -64,49 +64,7 @@ The system includes a **dual-role platform**: a user-facing dashboard for traffi
 ---
 
 ## System Architecture
-
-```
-┌──────────────────────────────────────────────────────────────────────┐
-│                     Frontend (React 18 + Vite + TypeScript)          │
-│                                                                      │
-│  User Role                          Admin Role                       │
-│  ├── LandingPage                    ├── AdminDashboard               │
-│  ├── AuthPage (login only)          │   ├── AdminOverview            │
-│  ├── DashboardHome                  │   ├── AdminComplaints          │
-│  ├── UploadPage (MJPEG streams)     │   ├── AdminTrafficMap          │
-│  ├── AnalyticsPage                  │   ├── AdminUsers               │
-│  ├── SimulationPage                 │   └── AdminFeedback            │
-│  ├── ChatPage                       └────────────────────────────────│
-│  └── FeedbackPage                                                    │
-└──────────────────────────┬───────────────────────────────────────────┘
-                           │ HTTP / MJPEG / fetch poll
-┌──────────────────────────▼──────────────────────────────────────────┐
-│                      Flask API (Python) — Modular                   │
-│                                                                     │
-│  routes/stats.py       → /api/live-stats, /api/signal-state         │
-│  routes/analysis.py    → /api/upload-video, /api/start-analysis     │
-│  routes/complaints.py  → /api/complaints, /api/complaints/stats     │
-│  routes/emergency.py   → /api/emergency, /api/emergency-history     │
-│  routes/data.py        → /api/comparison, /api/performance          │
-│                                                                     │
-│  core/detection.py     → YOLO + DeepSORT + violation detection      │
-│  core/signal.py        → SignalController (green/yellow/red phases) │
-│  core/anpr.py          → EasyOCR plate reading + complaint filing   │
-│  core/state.py         → Shared queues, locks, stats, flags         │
-└──────────┬───────────────────────────┬──────────────────────────────┘
-           │                           │
-┌──────────▼──────────────┐  ┌─────────▼──────────────────────────────┐
-│     AI Pipeline         │  │         Supabase (PostgreSQL)          │
-│  YOLOv8n (detection)    │  │  users            — user accounts      │
-│  DeepSORT (tracking)    │  │  admins           — admin accounts     │
-│  EasyOCR (plate OCR)    │  │  complaints       — violation records  │
-│  Fuzzy Logic (timing)   │  │  feedback         — user ratings       │
-│  Random Forest(priority)│  │  lane_status      — live lane data     │
-│  SignalController       │  │  emergency_log    — emergency history  │
-│  Violation Engine       │  │  comparison_results                    │
-└─────────────────────────┘  │  Storage: snapshots bucket (images)    │
-                             └────────────────────────────────────────┘
-```
+C:\Users\ASUS\Documents\UTEM\Course\Sem 6\BAXU 3973 (FYP)\FYPV2\System architecture.png
 
 ---
 
@@ -385,7 +343,6 @@ The system detects 3 types of violations automatically during video analysis:
 | Limitation | Notes |
 |---|---|
 | Plate OCR accuracy | EasyOCR on low-resolution CCTV footage is imperfect which UNKNOWN plates are skipped entirely |
-| No ANPR camera | Real JPJ system uses dedicated IR plate cameras; this uses the same frame as vehicle detection |
 | Speed calibration | `PIXELS_PER_METER = 8.0` is fixed — accuracy varies with camera angle and mounting height |
 | Single intersection | Designed for 4-lane single intersection; multi-intersection needs architectural changes |
 ---
