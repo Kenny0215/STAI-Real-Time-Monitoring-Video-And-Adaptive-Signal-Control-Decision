@@ -12,6 +12,9 @@ const YELLOW_SECS = 3;
 const MIN_GREEN   = 10;
 const CYCLE_TIME  = 120;
 const POLL_MS     = 2000;
+const EMERGENCY_POLL_MS = 6000;
+
+
 
 interface LaneStat {
   lane_key:          string;
@@ -189,7 +192,12 @@ const sortByScore = (lanes: LaneStat[]): LaneStat[] =>
     return b.vehicle_count - a.vehicle_count;
   });
 
-export const SimulationPage = ({ hasData }: { hasData: boolean }) => {
+interface SimulationPageProps {
+  hasData: boolean;
+  onStartSimulation?: () => void;   // NEW — parent handles the actual /api/start-analysis call
+}
+
+export const SimulationPage = ({ hasData, onStartSimulation }: SimulationPageProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const [lanes,         setLanes]         = useState<LaneStat[]>([]);
@@ -211,6 +219,13 @@ export const SimulationPage = ({ hasData }: { hasData: boolean }) => {
   const [stagedEmergencies,   setStagedEmergencies]   = useState<StagedEntry[]>([]);
   const [showScenarioPanel,   setShowScenarioPanel]   = useState(false);
   const activeEmergenciesRef = useRef<ActiveEmergency[]>([]);
+
+  // ── NEW: confirm dialog before starting simulation ──
+  const [showStartConfirm, setShowStartConfirm] = useState(false);
+  const handleConfirmStart = useCallback(() => {
+    setShowStartConfirm(false);
+    onStartSimulation?.();
+  }, [onStartSimulation]);
 
   const lanesRef         = useRef<LaneStat[]>([]);
   const activeLaneKeyRef = useRef<string | null>(null);
@@ -555,11 +570,17 @@ export const SimulationPage = ({ hasData }: { hasData: boolean }) => {
     } catch { /* ignore */ }
   }, []);
 
-  useEffect(() => {
-    pollStats(); pollEmergency();
-    const p = setInterval(() => { pollStats(); pollEmergency(); }, POLL_MS);
-    return () => clearInterval(p);
-  }, [pollStats, pollEmergency]);
+useEffect(() => {
+  pollStats();
+  const p = setInterval(pollStats, POLL_MS);
+  return () => clearInterval(p);
+}, [pollStats]);
+
+useEffect(() => {
+  pollEmergency();
+  const e = setInterval(pollEmergency, EMERGENCY_POLL_MS);
+  return () => clearInterval(e);
+}, [pollEmergency]);
 
   // ── Canvas draw loop ─────────────────────────────────────────
   useEffect(() => {
@@ -1136,6 +1157,39 @@ export const SimulationPage = ({ hasData }: { hasData: boolean }) => {
     );
   };
 
+  // ── NEW: Start simulation confirmation modal ─────────────────
+  const StartConfirmModal = () => (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      onClick={e => { if (e.target === e.currentTarget) setShowStartConfirm(false); }}
+    >
+      <div className="w-full max-w-sm bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <Brain size={18} className="text-emerald-400" />
+          <p className="text-sm font-bold text-white">Start Simulation?</p>
+        </div>
+        <p className="text-xs text-slate-400 leading-relaxed">
+          This will begin live video analysis and signal control across all four lanes.
+          Make sure your videos are uploaded before continuing.
+        </p>
+        <div className="flex items-center justify-end gap-2 pt-1">
+          <button
+            onClick={() => setShowStartConfirm(false)}
+            className="px-4 py-2 rounded-lg border border-slate-700 text-slate-400 hover:text-white hover:border-slate-500 text-xs font-bold transition-all"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleConfirmStart}
+            className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all"
+          >
+            Start Simulation
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-4 pb-12">
 
@@ -1209,6 +1263,9 @@ export const SimulationPage = ({ hasData }: { hasData: boolean }) => {
         </div>
       </div>
 
+      {/* Start simulation confirm modal */}
+      {showStartConfirm && <StartConfirmModal />}
+
       {/* Emergency modal */}
       {showScenarioPanel && <ScenarioPanel />}
 
@@ -1229,6 +1286,14 @@ export const SimulationPage = ({ hasData }: { hasData: boolean }) => {
                 <p className="text-sm text-center max-w-xs text-slate-600 px-6">
                   Start an analysis on the Video Upload page first.
                 </p>
+                {onStartSimulation && (
+                  <button
+                    onClick={() => setShowStartConfirm(true)}
+                    className="mt-2 px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all"
+                  >
+                    ▶ Start Simulation
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -1250,6 +1315,14 @@ export const SimulationPage = ({ hasData }: { hasData: boolean }) => {
           {noAnalysis ? (
             <div className="flex flex-col items-center justify-center h-40 gap-2 text-slate-600 border border-brand-border rounded-xl">
               <p className="text-sm">Waiting for live data...</p>
+              {onStartSimulation && (
+                <button
+                  onClick={() => setShowStartConfirm(true)}
+                  className="mt-1 px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold transition-all"
+                >
+                  ▶ Start Simulation
+                </button>
+              )}
             </div>
           ) : (<>
 
@@ -1399,7 +1472,7 @@ export const SimulationPage = ({ hasData }: { hasData: boolean }) => {
               })}
             </div>
 
-            {/* Decision log */}
+            {/* Decision log (frontend simulation narrative) */}
             {cycleLog.length > 0 && (
               <Card title="Signal Decision Log" subtitle="Score-based ordering · Fuzzy + Coordinated timing">
                 <div className="mt-2 space-y-0.5 max-h-44 overflow-y-auto">

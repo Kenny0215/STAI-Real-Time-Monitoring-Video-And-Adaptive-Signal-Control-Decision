@@ -1,7 +1,3 @@
-"""
-core/detection.py
-YOLO + DeepSort lane processing, overlay drawing, auto-save thread.
-"""
 import os
 import sys
 import cv2
@@ -44,6 +40,9 @@ yolo_model = YOLO(YOLO_MODEL_PATH)
 print("[INFO] YOLO ready.")
 
 fuzzy_ctrl  = FuzzyGreenTimeController()
+# NEW — per-lane throttle so fuzzy only recomputes once per second per lane
+_last_fuzzy_calc = {}       # {lane_key: last_calc_timestamp}
+FUZZY_INTERVAL   = 1.0      # seconds
 rf_model    = None
 le_priority = None
 le_cong     = None
@@ -333,7 +332,13 @@ def process_lane(lane_key, video_path, display_name, supabase):
                 avg_speed   = round(sum(speed_list) / max(len(speed_list), 1), 1)
                 density     = calculate_density(active, width, height)
                 congestion  = classify_congestion(active)
-                green_time  = fuzzy_ctrl.calculate(active, avg_speed, heavy_ratio, congestion)
+                now_fuzzy = time.time()
+                if now_fuzzy - _last_fuzzy_calc.get(lane_key, 0) >= FUZZY_INTERVAL:
+                    _last_fuzzy_calc[lane_key] = now_fuzzy
+                    green_time = fuzzy_ctrl.calculate(active, avg_speed, heavy_ratio, congestion, lane_key=lane_key)
+                else:
+                    green_time = local_stats.get("green_time", MIN_GREEN)  # reuse last known value, skip recompute
+
                 priority    = predict_priority(active, density, heavy_ratio, avg_speed, congestion)
                 p_score     = calculate_priority_score(active, density, heavy_ratio, avg_speed, congestion)
 

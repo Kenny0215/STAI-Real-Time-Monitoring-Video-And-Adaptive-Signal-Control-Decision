@@ -8,7 +8,7 @@ import { Card }            from '../components/Card';
 import { Button }          from '../components/Button';
 import { cn }              from '../utils';
 import { TrafficLightIcon } from '../components/TrafficLightIcon';
-// import { GoogleGenAI, Type } from '@google/genai'; // AI validation disabled — quota exceeded
+import { StreamImg }        from '../components/Streaming';
 import { UploadState, LaneStat } from '../App';
 
 const FLASK_URL = 'http://127.0.0.1:5000';
@@ -25,16 +25,14 @@ const LANE_CONFIG_DISPLAY: Record<string, string> = {
   LaneA: 'Lane A', LaneB: 'Lane B', LaneC: 'Lane C', LaneD: 'Lane D',
 };
 
-// ── Props ──────────────────────────────────────────────────
 interface UploadPageProps {
-  uploadState:       UploadState;
-  setUploadState:    React.Dispatch<React.SetStateAction<UploadState>>;
-  startStatsPoll:    (lanes: string[]) => void;
-  onClearAll:        () => Promise<void>;  // from App.tsx — also sets hasData=false
-  onAnalysisComplete: () => void;          // from App.tsx — sets hasData=true + nav to dashboard
+  uploadState:        UploadState;
+  setUploadState:     React.Dispatch<React.SetStateAction<UploadState>>;
+  startStatsPoll:     (lanes: string[]) => void;
+  onClearAll:         () => Promise<void>;
+  onAnalysisComplete: () => void;
 }
 
-// ── Component ──────────────────────────────────────────────
 export const UploadPage = ({
   uploadState,
   setUploadState,
@@ -43,18 +41,15 @@ export const UploadPage = ({
   onAnalysisComplete,
 }: UploadPageProps) => {
 
-  // Destructure all state from App.tsx
   const {
     files, uploadedFiles, activeLanes, laneStats,
     isStreaming, processing, progress, progressLabel,
     error, uploadingLane,
   } = uploadState;
 
-  // Helper — update one or more fields without touching others
   const set = (patch: Partial<UploadState>) =>
     setUploadState(prev => ({ ...prev, ...patch }));
 
-  // File input refs are local (DOM refs, not persisted state)
   const fileInputRefs = {
     'Lane A': useRef<HTMLInputElement>(null),
     'Lane B': useRef<HTMLInputElement>(null),
@@ -62,19 +57,44 @@ export const UploadPage = ({
     'Lane D': useRef<HTMLInputElement>(null),
   };
 
-  // Flask health check — local UI state only
   const [flaskOnline, setFlaskOnline] = React.useState<boolean | null>(null);
+
+  // ── Stream key — shared by ALL 4 lanes simultaneously ──────
+  // Changing this forces every <StreamImg> to remount at once,
+  // fixing the issue where only some lanes (e.g. C, D) go black
+  // after returning from another browser tab.
+  const [streamKey, setStreamKey] = React.useState(() => Date.now());
+
+  const remountAllStreams = React.useCallback(() => {
+    setStreamKey(Date.now());
+  }, []);
 
   useEffect(() => {
     fetch(`${FLASK_URL}/api/health`)
       .then(r => r.ok ? setFlaskOnline(true) : setFlaskOnline(false))
       .catch(() => setFlaskOnline(false));
-  }, []);
 
-  // ── AI Frame Validation via Gemini (DISABLED — quota exceeded) ──
-  // Re-enable by uncommenting below and restoring the import at the top
-  // const captureFrame = (file: File): Promise<string> => { ... };
-  // const validateWithAI = async (lane: string, file: File) => { ... };
+    // Remount all streams once on mount
+    remountAllStreams();
+
+    // Remount all streams when tab becomes visible again
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        remountAllStreams();
+      }
+    };
+
+    // Remount all streams when window regains focus
+    const onFocus = () => remountAllStreams();
+
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [remountAllStreams]);
 
   const handleFileChange = (lane: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0] || null;
@@ -83,8 +103,6 @@ export const UploadPage = ({
       set({ files: { ...files, [lane]: null } });
       return;
     }
-
-    // ── Manual validation (AI validation temporarily disabled) ──
     const allowed = ['.mp4', '.avi', '.mov'];
     const ext = selectedFile.name.toLowerCase();
     if (!allowed.some(e => ext.endsWith(e))) {
@@ -97,14 +115,12 @@ export const UploadPage = ({
       e.target.value = '';
       return;
     }
-
-    // File passed — accept it directly
     set({ files: { ...files, [lane]: selectedFile }, error: null });
   };
 
   const removeFile = (lane: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const newFiles = { ...files, [lane]: null };
+    const newFiles    = { ...files, [lane]: null };
     const newUploaded = { ...uploadedFiles };
     delete newUploaded[toLaneKey(lane)];
     set({ files: newFiles, uploadedFiles: newUploaded });
@@ -113,7 +129,6 @@ export const UploadPage = ({
     }
   };
 
-  // ── Upload + Start Analysis ─────────────────────────────
   const handleStart = async () => {
     const lanesToProcess = Object.entries(files).filter(([, f]) => f !== null);
     if (lanesToProcess.length === 0) return;
@@ -125,7 +140,6 @@ export const UploadPage = ({
     const newUploaded: Record<string, string> = {};
 
     try {
-      // Step 1 — Upload each file to Flask
       for (const [lane, file] of lanesToProcess) {
         set({ uploadingLane: lane, progressLabel: `Uploading ${lane}...` });
 
@@ -153,10 +167,7 @@ export const UploadPage = ({
         });
       }
 
-      set({ uploadingLane: null });
-
-      // Step 2 — Tell Flask to start analysis
-      set({ progressLabel: 'Starting AI analysis...' });
+      set({ uploadingLane: null, progressLabel: 'Starting AI analysis...' });
 
       const res = await fetch(`${FLASK_URL}/api/start-analysis`, {
         method:  'POST',
@@ -169,14 +180,12 @@ export const UploadPage = ({
         throw new Error(err.error || 'Failed to start analysis');
       }
 
-      // Step 3 — Animate to 100%
       set({ progressLabel: 'Initializing streams...' });
       for (let p = Math.round((stepsDone / totalSteps) * 80); p <= 100; p += 5) {
         set({ progress: p });
         await new Promise(r => setTimeout(r, 60));
       }
 
-      // Step 4 — Switch to stream view
       const laneKeys = Object.keys(newUploaded);
       set({
         activeLanes:   laneKeys,
@@ -184,9 +193,11 @@ export const UploadPage = ({
         isStreaming:   true,
         uploadedFiles: newUploaded,
       });
-      startStatsPoll(laneKeys);
 
-      // Auto-set hasData=true so dashboard is live immediately
+      // Force fresh stream connections for all lanes
+      remountAllStreams();
+
+      startStatsPoll(laneKeys);
       onAnalysisComplete();
 
     } catch (err: any) {
@@ -242,11 +253,11 @@ export const UploadPage = ({
               >
                 <Card className="p-0 overflow-hidden">
                   <div className="relative bg-black aspect-video">
-                    <img
-                      src={`${FLASK_URL}/api/stream-local/${laneKey}`}
-                      alt={`${displayName} stream`}
+                    <StreamImg
+                      laneKey={laneKey}
+                      isActive={isStreaming}
+                      streamKey={streamKey}
                       className="w-full h-full object-cover"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
                     <div className="absolute top-3 left-3 bg-black/70 text-white text-xs font-bold px-2 py-1 rounded">
                       {displayName}
@@ -289,8 +300,6 @@ export const UploadPage = ({
             );
           })}
         </div>
-
-
       </div>
     );
   }

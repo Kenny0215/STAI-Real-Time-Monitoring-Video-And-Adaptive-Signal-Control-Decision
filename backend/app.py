@@ -2,7 +2,10 @@ import os
 import threading
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=UserWarning, message=".*pkg_resources.*")
 warnings.filterwarnings("ignore", category=UserWarning, module="torch")
+warnings.filterwarnings("ignore", category=UserWarning, module="sklearn")
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="skfuzzy")
 from flask import Flask, jsonify
 from flask_cors import CORS
 from supabase import create_client, Client
@@ -28,6 +31,7 @@ from routes.complaints import complaints_bp,  init_supabase as complaints_init
 from routes.emergency  import emergency_bp,   init_supabase as emergency_init
 from routes.data       import data_bp,        init_supabase as data_init, init_models
 from routes.retrain    import retrain_bp,      init_supabase as retrain_init
+from routes.decisions import decisions_bp
 
 app.register_blueprint(stats_bp)
 app.register_blueprint(analysis_bp)
@@ -35,6 +39,7 @@ app.register_blueprint(complaints_bp)
 app.register_blueprint(emergency_bp)
 app.register_blueprint(data_bp)
 app.register_blueprint(retrain_bp)
+app.register_blueprint(decisions_bp)
 
 # ── Inject Supabase into route modules ─────────────────────
 analysis_init(supabase)

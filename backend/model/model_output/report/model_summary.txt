@@ -1,35 +1,33 @@
 =======================================================
-  SmartTraffic AI — RF Model Report (Retrained)
+  RF Model Report
 =======================================================
 
-Training samples : 1463
-Test samples     : 293
-Features         : ['vehicle_count', 'density', 'heavy_ratio', 'avg_speed', 'congestion_enc', 'count_x_density', 'speed_x_heavy', 'count_x_heavy', 'density_x_cong', 'speed_inv']
+Samples (after dedup): 1248
+Train/Val/Test split : 60/20/20
+OOB Score             : 96.79%
+CV mean accuracy      : 96.66% (+/- 0.73%)
 
-Accuracy         : 99.32%
-Weighted F1      : 99.32%
+Train accuracy        : 97.59%
+Validation accuracy   : 97.60%
+Test accuracy         : 95.60%
+Overfit gap           : 1.99 pp
 
-Best params      : {'max_depth': None, 'max_features': 'sqrt', 'min_samples_leaf': 1, 'min_samples_split': 2, 'n_estimators': 200}
+Weighted F1 (test)    : 95.59%
 
---- Classification Report ---
+--- Classification Report (Test) ---
               precision    recall  f1-score   support
 
-         Low       0.99      1.00      0.99       144
-      Medium       1.00      1.00      1.00        74
-        High       1.00      0.97      0.99        75
+         Low       0.98      0.98      0.98       107
+      Medium       0.90      0.99      0.94        72
+        High       0.98      0.89      0.93        71
 
-    accuracy                           0.99       293
-   macro avg       1.00      0.99      0.99       293
-weighted avg       0.99      0.99      0.99       293
+    accuracy                           0.96       250
+   macro avg       0.95      0.95      0.95       250
+weighted avg       0.96      0.96      0.96       250
 
---- Feature Importances ---
-  Count × Density           27.48%
-  Congestion Level          20.65%
-  Vehicle Count             16.61%
-  Traffic Density           13.05%
-  Density × Congestion      12.72%
-  Speed × Heavy Ratio       2.93%
-  Count × Heavy Ratio       1.85%
-  Inverse Speed             1.67%
-  Heavy Vehicle Ratio       1.61%
-  Average Speed             1.43%
+--- Hyperparameters ---
+  max_depth         : 8
+  min_samples_split : 20
+  min_samples_leaf  : 10
+  max_features      : sqrt
+  n_estimators      : 150
